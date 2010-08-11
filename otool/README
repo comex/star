@@ -1,0 +1,4 @@
+This is a version of otool that has the option to force *ARM* disassembly, in the hope that it can find otherwise missing gadgets...
+
+to use in dsc,
+OTOOL="../otool/otool -tvvb" ./otool.sh [...]

@@ -1,0 +1,83 @@
+diff -ru cctools-758/otool/arm_disasm.c /usr/src/cctools-758/otool/arm_disasm.c
+--- cctools-758/otool/arm_disasm.c	2009-03-13 16:44:33.000000000 -0400
++++ /usr/src/cctools-758/otool/arm_disasm.c	2010-07-21 22:39:28.000000000 -0400
+@@ -4100,13 +4100,12 @@
+ 
+   /* These are the ways otool(1) determines if we are in thumb mode */
+   if (Bflag)
+-    force_thumb = TRUE;
++    in_thumb = TRUE;
++  else if (bflag)
++    in_thumb = FALSE;
+   else
+     set_thumb_mode(pc, info->nsorted_symbols, info->sorted_symbols, &in_thumb);
+ 
+-  if (force_thumb || in_thumb)
+-    is_thumb = TRUE;
+-
+   info->display_endian = little ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
+   info->bytes_per_line = 4;
+ 
+diff -ru cctools-758/otool/arm_disasm.h /usr/src/cctools-758/otool/arm_disasm.h
+--- cctools-758/otool/arm_disasm.h	2009-03-13 16:44:35.000000000 -0400
++++ /usr/src/cctools-758/otool/arm_disasm.h	2010-07-21 22:41:13.000000000 -0400
+@@ -24,6 +24,8 @@
+ #import <mach-o/reloc.h>
+ #import <mach-o/nlist.h>
+ #import <stuff/bool.h>
++#define CPU_SUBTYPE_ARM_V7 ((cpu_subtype_t) 9)
++
+ #include "stuff/symbol.h"
+ 
+ /* Used by otool(1) to stay or switch out of thumb mode */
+diff -ru cctools-758/otool/main.c /usr/src/cctools-758/otool/main.c
+--- cctools-758/otool/main.c	2009-04-14 20:04:02.000000000 -0400
++++ /usr/src/cctools-758/otool/main.c	2010-07-21 22:43:37.000000000 -0400
+@@ -75,6 +75,7 @@
+ enum bool Xflag = FALSE; /* don't print leading address in disassembly */
+ enum bool Zflag = FALSE; /* don't use simplified ppc mnemonics in disassembly */
+ enum bool Bflag = FALSE; /* force Thumb disassembly (ARM objects only) */
++enum bool bflag = FALSE; /* force ARM disassembly (ARM objects only) */
+ char *pflag = NULL; 	 /* procedure name to start disassembling from */
+ char *segname = NULL;	 /* name of the section to print the contents of */
+ char *sectname = NULL;
+@@ -407,6 +408,9 @@
+ 		case 'B':
+ 		    Bflag = TRUE;
+ 		    break;
++        case 'b':
++            bflag = TRUE;
++            break;
+ 		default:
+ 		    error("unknown char `%c' in flag %s\n", argv[i][j],argv[i]);
+ 		    usage();
+@@ -496,6 +500,7 @@
+ 	fprintf(stderr, "\t-X print no leading addresses or headers\n");
+ 	fprintf(stderr, "\t-m don't use archive(member) syntax\n");
+ 	fprintf(stderr, "\t-B force Thumb disassembly (ARM objects only)\n");
++	fprintf(stderr, "\t-b force ARM disassembly (ARM objects only)\n");
+ 	exit(EXIT_FAILURE);
+ }
+ 
+diff -ru cctools-758/otool/ofile_print.c /usr/src/cctools-758/otool/ofile_print.c
+--- cctools-758/otool/ofile_print.c	2009-04-20 13:00:42.000000000 -0400
++++ /usr/src/cctools-758/otool/ofile_print.c	2010-07-21 22:41:25.000000000 -0400
+@@ -29,6 +29,7 @@
+  * on values of fields for correctness should be done (such as proper alignment)
+  * and notations on errors should be printed.
+  */
++#define CPU_SUBTYPE_ARM_V7 ((cpu_subtype_t) 9)
+ 
+ #define __cr cr
+ #define __ctr ctr
+diff -ru cctools-758/otool/otool.h /usr/src/cctools-758/otool/otool.h
+--- cctools-758/otool/otool.h	2008-06-20 18:47:19.000000000 -0400
++++ /usr/src/cctools-758/otool/otool.h	2010-07-21 22:38:13.000000000 -0400
+@@ -48,6 +48,7 @@
+ extern enum bool Xflag; /* don't print leading address in disassembly */
+ extern enum bool Zflag; /* don't use simplified ppc mnemonics in disassembly */
+ extern enum bool Bflag; /* force Thumb disassembly (ARM objects only) */
++extern enum bool bflag; /* force ARM disassembly (ARM objects only) */
+ extern char *pflag; 	/* procedure name to start disassembling from */
+ extern char *segname,
+      *sectname;	    /* name of the section to print the contents of */

@@ -1,0 +1,465 @@
+diff -rbu xnu-1504.7.4.orig/bsd/libkern/libkern.h xnu-1504.7.4/bsd/libkern/libkern.h
+--- xnu-1504.7.4.orig/bsd/libkern/libkern.h	2010-06-17 12:18:37.000000000 -0400
++++ xnu-1504.7.4/bsd/libkern/libkern.h	2010-07-02 14:21:32.000000000 -0400
+@@ -76,6 +76,7 @@
+ #include <sys/cdefs.h>
+ #include <sys/types.h>
+ #include <mach/vm_param.h>
++#include <mach/mach.h>
+ 
+ #ifdef __APPLE_API_OBSOLETE
+ /* BCD conversions. */
+Only in xnu-1504.7.4/bsd/miscfs/nullfs: .null_vfsops.c.swp
+diff -rbu xnu-1504.7.4.orig/bsd/miscfs/nullfs/null.h xnu-1504.7.4/bsd/miscfs/nullfs/null.h
+--- xnu-1504.7.4.orig/bsd/miscfs/nullfs/null.h	2010-06-17 12:18:38.000000000 -0400
++++ xnu-1504.7.4/bsd/miscfs/nullfs/null.h	2010-07-02 14:42:00.000000000 -0400
+@@ -1,3 +1,5 @@
++#include <null.h>
++#if 0
+ /*
+  * Copyright (c) 2000-2002 Apple Computer, Inc. All rights reserved.
+  *
+@@ -116,3 +118,4 @@
+ 
+ #endif /* __APPLE_API_PRIVATE */
+ #endif /* __NULLFS_NULL_H__ */
++#endif
+Only in xnu-1504.7.4/bsd/miscfs/union: .union_subr.c.swp
+Only in xnu-1504.7.4/bsd/miscfs/union: .union_vfsops.c.swp
+diff -rbu xnu-1504.7.4.orig/bsd/sys/eventvar.h xnu-1504.7.4/bsd/sys/eventvar.h
+--- xnu-1504.7.4.orig/bsd/sys/eventvar.h	2010-06-17 12:18:40.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/eventvar.h	2010-07-02 14:37:07.000000000 -0400
+@@ -59,11 +59,14 @@
+ #include <sys/event.h>
+ #include <sys/select.h>
+ #include <kern/kern_types.h>
++#include <kern/locks.h>
+ 
+ #define KQ_NEVENTS	16		/* minimize copy{in,out} calls */
+ #define KQEXTENT	256		/* linear growth by this amount */
+ 
+-struct kqueue {
++struct kqueue;
++#if 0
++{
+ 	wait_queue_set_t kq_wqs;	/* private wait queue set */
+ 	decl_lck_spin_data( ,kq_lock)	/* kqueue lock */
+ 	int		kq_state;
+@@ -80,7 +83,7 @@
+ #define KQ_KEV32	0x08
+ #define KQ_KEV64	0x10
+ };
+-
++#endif
+ extern struct kqueue *kqueue_alloc(struct proc *);
+ extern void kqueue_dealloc(struct kqueue *);
+ 
+diff -rbu xnu-1504.7.4.orig/bsd/sys/kernel_types.h xnu-1504.7.4/bsd/sys/kernel_types.h
+--- xnu-1504.7.4.orig/bsd/sys/kernel_types.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/kernel_types.h	2010-07-02 14:20:18.000000000 -0400
+@@ -57,10 +57,10 @@
+ #endif
+ 
+ struct mount;
+-typedef struct mount * mount_t;
++//typedef struct mount * mount_t;
+ 
+ struct vnode;
+-typedef struct vnode * vnode_t;
++//typedef struct vnode * vnode_t;
+ 
+ struct proc;
+ typedef struct proc * proc_t;
+diff -rbu xnu-1504.7.4.orig/bsd/sys/mount_internal.h xnu-1504.7.4/bsd/sys/mount_internal.h
+--- xnu-1504.7.4.orig/bsd/sys/mount_internal.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/mount_internal.h	2010-07-02 14:38:01.000000000 -0400
+@@ -268,12 +268,13 @@
+ #define	NFSV4_MAX_FH_SIZE	128
+ #define	NFSV3_MAX_FH_SIZE	64
+ #define	NFSV2_MAX_FH_SIZE	32
++#if 0
+ struct fhandle {
+ 	int		fh_len;				/* length of file handle */
+ 	unsigned char	fh_data[NFS_MAX_FH_SIZE];	/* file handle value */
+ };
+ typedef struct fhandle	fhandle_t;
+-
++#endif
+ 
+ 
+ /*
+@@ -334,7 +335,7 @@
+ 	} mountfs_args;
+ };
+ 
+-
++#if 0
+ /*
+  * LP64 *user* version of statfs structure.
+  * NOTE - must be kept in sync with struct statfs in mount.h
+@@ -388,7 +389,7 @@
+ 	char		f_reserved3;	/* For alignment */
+ 	user32_long_t	f_reserved4[4];	/* For future use */
+ };
+-
++#endif
+ /*
+  * throttle I/Os are affected only by normal I/Os happening on the same bsd device node.  For example, disk1s3 and
+  * disk1s5 are the same device node, while disk1s3 and disk2 are not (although disk2 might be a mounted disk image file
+@@ -436,6 +437,7 @@
+ void mount_iterreset(mount_t);
+ 
+ /* throttled I/O api */
++struct uthread;
+ int throttle_get_io_policy(struct uthread **ut);
+ extern void throttle_lowpri_io(boolean_t ok_to_sleep);
+ int throttle_io_will_be_throttled(int lowpri_window_msecs, mount_t mp);
+diff -rbu xnu-1504.7.4.orig/bsd/sys/namei.h xnu-1504.7.4/bsd/sys/namei.h
+--- xnu-1504.7.4.orig/bsd/sys/namei.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/namei.h	2010-07-02 15:26:57.000000000 -0400
+@@ -90,6 +90,14 @@
+ /*
+  * Encapsulation of namei parameters.
+  */
++enum uio_seg {
++    UIO_USERSPACE       = 0,    /* kernel address is virtual,  to/from user virtual */
++    UIO_SYSSPACE        = 2,    /* kernel address is virtual,  to/from system virtual */
++    UIO_USERSPACE32     = 5,    /* kernel address is virtual,  to/from user 32-bit virtual */
++    UIO_USERSPACE64     = 8,    /* kernel address is virtual,  to/from user 64-bit virtual */
++    UIO_SYSSPACE32      = 11    /* deprecated */
++};
++
+ struct nameidata {
+ 	/*
+ 	 * Arguments to namei/lookup.
+diff -rbu xnu-1504.7.4.orig/bsd/sys/proc_internal.h xnu-1504.7.4/bsd/sys/proc_internal.h
+--- xnu-1504.7.4.orig/bsd/sys/proc_internal.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/proc_internal.h	2010-07-02 15:21:21.000000000 -0400
+@@ -77,6 +77,7 @@
+ 
+ #include <libkern/OSAtomic.h>
+ #include <sys/proc.h>
++#include <sys/kernel_types.h>
+ __BEGIN_DECLS
+ #include <kern/locks.h>
+ #if PSYNCH
+@@ -460,7 +461,9 @@
+ #include <sys/time.h>	/* user_timeval, user_itimerval */
+ 
+ #pragma pack(4)
+-struct user32_extern_proc {
++struct user32_extern_proc;
++#if 0
++{
+ 	union {
+ 		struct {
+ 			uint32_t __p_forw;	/* Doubly-linked run/sleep queue. */
+@@ -563,6 +566,7 @@
+ 	u_short	p_acflag;	/* Accounting flags. */
+ 	user_addr_t	p_ru __attribute((aligned(8)));	/* Exit information. XXX */
+ };
++#endif
+ #endif	/* KERNEL */
+ 
+ /*
+@@ -633,7 +637,7 @@
+ extern void proc_fdlock(struct proc *);
+ extern void proc_fdlock_spin(struct proc *);
+ extern void proc_fdunlock(struct proc *);
+-extern void proc_fdlock_assert(proc_t p, int assertflags);
++//extern void proc_fdlock_assert(proc_t p, int assertflags);
+ __private_extern__ int proc_core_name(const char *name, uid_t uid, pid_t pid,
+ 		char *cr_name, size_t cr_name_len);
+ extern int isinferior(struct proc *, struct proc *);
+diff -rbu xnu-1504.7.4.orig/bsd/sys/resource.h xnu-1504.7.4/bsd/sys/resource.h
+--- xnu-1504.7.4.orig/bsd/sys/resource.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/resource.h	2010-07-02 14:35:09.000000000 -0400
+@@ -178,7 +178,10 @@
+ 
+ #ifdef KERNEL
+ 
+-struct	user64_rusage {
++struct	user64_rusage;
++struct	user32_rusage;
++#if 0
++{
+ 	struct user64_timeval ru_utime;	/* user time used */
+ 	struct user64_timeval ru_stime;	/* system time used */
+ 	user64_long_t	ru_maxrss;		/* max resident set size */
+@@ -215,7 +218,7 @@
+ 	user32_long_t	ru_nvcsw;		/* voluntary context switches */
+ 	user32_long_t	ru_nivcsw;		/* involuntary " */
+ };
+-
++#endif
+ #endif /* KERNEL */
+ 
+ 
+diff -rbu xnu-1504.7.4.orig/bsd/sys/resourcevar.h xnu-1504.7.4/bsd/sys/resourcevar.h
+--- xnu-1504.7.4.orig/bsd/sys/resourcevar.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/resourcevar.h	2010-07-02 14:34:40.000000000 -0400
+@@ -65,11 +65,13 @@
+ #define	_SYS_RESOURCEVAR_H_
+ 
+ #include <sys/appleapiopts.h>
++#include "resource.h"
+ 
+ /*
+  * Kernel per-process accounting / statistics
+  * (not necessarily resident except when running).
+  */
++#if 0
+ struct pstats {
+ #define	pstat_startzero	p_ru
+ 	struct	rusage p_ru;		/* stats for this proc */
+@@ -99,6 +101,7 @@
+ 	} user_p_prof;
+ #endif // KERNEL
+ };
++#endif
+ 
+ /*
+  * Kernel shareable process resource limits.  Because this structure
+diff -rbu xnu-1504.7.4.orig/bsd/sys/signalvar.h xnu-1504.7.4/bsd/sys/signalvar.h
+--- xnu-1504.7.4.orig/bsd/sys/signalvar.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/signalvar.h	2010-07-02 15:27:15.000000000 -0400
+@@ -76,7 +76,9 @@
+  * Process signal actions and state, needed only within the process
+  * (not necessarily resident).
+  */
+-struct	sigacts {
++struct	sigacts;
++#if 0
++ {
+ 	user_addr_t	ps_sigact[NSIG];	/* disposition of signals */
+ 	user_addr_t 	ps_trampact[NSIG];	/* disposition of signals */
+ 	sigset_t ps_catchmask[NSIG];	/* signals to be blocked */
+@@ -94,7 +96,7 @@
+ 	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
+ 	sigset_t ps_64regset;		/* signals that want SA_EXSIGINFO args */
+ };
+-
++#endif
+ /* signal flags */
+ #define	SAS_OLDMASK	0x01		/* need to restore mask before pause */
+ #define	SAS_ALTSTACK	0x02		/* have alternate signal stack */
+diff -rbu xnu-1504.7.4.orig/bsd/sys/systm.h xnu-1504.7.4/bsd/sys/systm.h
+--- xnu-1504.7.4.orig/bsd/sys/systm.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/systm.h	2010-07-02 14:20:51.000000000 -0400
+@@ -103,6 +103,7 @@
+ #include <sys/time.h>
+ #include <sys/ioctl.h>
+ #include <sys/malloc.h>
++#include <sys/mount.h>
+ #ifdef BSD_KERNEL_PRIVATE
+ #include <sys/tty.h>
+ #include <sys/vm.h>
+diff -rbu xnu-1504.7.4.orig/bsd/sys/tty.h xnu-1504.7.4/bsd/sys/tty.h
+--- xnu-1504.7.4.orig/bsd/sys/tty.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/tty.h	2010-07-02 15:24:26.000000000 -0400
+@@ -111,7 +111,9 @@
+  * Glue could be masks of what to echo and circular buffer
+  * (low, high, timeout).
+  */
+-struct tty {
++struct tty;
++#if 0
++{
+ 	lck_mtx_t	t_lock;		/* Per tty lock */
+ 
+ 	struct	clist t_rawq;		/* Device raw input queue. */
+@@ -145,6 +147,7 @@
+ 	int	t_gen;			/* Generation number. */
+ 	void	*t_iokit;		/* IOKit management */
+ };
++#endif
+ 
+ #define TTY_NULL (struct tty *)0
+ 
+diff -rbu xnu-1504.7.4.orig/bsd/sys/ubc.h xnu-1504.7.4/bsd/sys/ubc.h
+--- xnu-1504.7.4.orig/bsd/sys/ubc.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/ubc.h	2010-07-02 14:38:15.000000000 -0400
+@@ -101,7 +101,7 @@
+ 
+ 
+ /* UPL routines */
+-int	ubc_create_upl(vnode_t, off_t, int, upl_t *, upl_page_info_t **, int);
++//int	ubc_create_upl(vnode_t, off_t, int, upl_t *, upl_page_info_t **, int);
+ int	ubc_upl_map(upl_t, vm_offset_t *);
+ int	ubc_upl_unmap(upl_t);
+ int	ubc_upl_commit(upl_t);
+@@ -109,7 +109,7 @@
+ int	ubc_upl_abort(upl_t, int);
+ int	ubc_upl_abort_range(upl_t, upl_offset_t, upl_size_t, int);
+ 
+-upl_page_info_t *ubc_upl_pageinfo(upl_t);
++//upl_page_info_t *ubc_upl_pageinfo(upl_t);
+ upl_size_t ubc_upl_maxbufsize(void);
+ 
+ int	is_file_clean(vnode_t, off_t);
+diff -rbu xnu-1504.7.4.orig/bsd/sys/ubc_internal.h xnu-1504.7.4/bsd/sys/ubc_internal.h
+--- xnu-1504.7.4.orig/bsd/sys/ubc_internal.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/ubc_internal.h	2010-07-03 14:08:12.000000000 -0400
+@@ -50,7 +50,7 @@
+ #include <kern/locks.h>
+ #include <mach/memory_object_types.h>
+ 
+-#include <libkern/crypto/sha1.h>
++//#include <libkern/crypto/sha1.h>
+ 
+ 
+ #define UBC_INFO_NULL	((struct ubc_info *) 0)
+@@ -61,7 +61,7 @@
+ /* 
+  * Maximum number of vfs clusters per vnode
+  */
+-#define MAX_CLUSTERS	CONFIG_MAX_CLUSTERS
++#define MAX_CLUSTERS	0 //CONFIG_MAX_CLUSTERS
+ 
+ #define SPARSE_PUSH_LIMIT 4	/* limit on number of concurrent sparse pushes outside of the cl_lockw */
+                                 /* once we reach this limit, we'll hold the lock */
+@@ -105,7 +105,7 @@
+ 	vm_size_t	csb_mem_size;
+ 	vm_offset_t	csb_mem_offset;
+ 	vm_address_t	csb_mem_kaddr;
+-	unsigned char	csb_sha1[SHA1_RESULTLEN];
++	unsigned char	csb_sha1[0];//SHA1_RESULTLEN];
+ };
+ 
+ /*
+diff -rbu xnu-1504.7.4.orig/bsd/sys/user.h xnu-1504.7.4/bsd/sys/user.h
+--- xnu-1504.7.4.orig/bsd/sys/user.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/user.h	2010-07-02 15:27:35.000000000 -0400
+@@ -105,7 +105,9 @@
+  *	Per-thread U area.
+  */
+  
+-struct uthread {
++struct uthread;
++#if 0
++{
+ 	/* syscall parameters, results and catches */
+ 	u_int64_t uu_arg[8]; /* arguments to current system call */
+ 	int	*uu_ap;			/* pointer to arglist */
+@@ -237,6 +239,7 @@
+ 	uint32_t	uu_psynchretval;	/* pmtx retval */
+ 	void *		uu_kwqqueue;		/* queue blocked on */
+ };
++#endif
+ 
+ typedef struct uthread * uthread_t;
+ 
+diff -rbu xnu-1504.7.4.orig/bsd/sys/vnode.h xnu-1504.7.4/bsd/sys/vnode.h
+--- xnu-1504.7.4.orig/bsd/sys/vnode.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/vnode.h	2010-07-02 14:33:03.000000000 -0400
+@@ -70,6 +70,7 @@
+ #include <sys/kernel_types.h>
+ #include <sys/signal.h>
+ #endif
++#include <mach/mach.h>
+ 
+ /*
+  * The vnode is the focus of all file activity in UNIX.  There is a
+@@ -911,6 +912,9 @@
+  */
+ int 	vnode_vfs64bitready(vnode_t);
+ 
++struct ipc_port;
++typedef struct ipc_port        *ipc_port_t;
++    
+ /* These should move to private ... not documenting for now */
+ int	vfs_context_get_special_port(vfs_context_t, int, ipc_port_t *);
+ int	vfs_context_set_special_port(vfs_context_t, int, ipc_port_t);
+@@ -1513,6 +1517,8 @@
+  @param p Process requesting I/O.
+  @return 0 for success; errors from filesystem, and EIO if did not perform all requested I/O and the "aresid" parameter is NULL.
+  */
++enum uio_rw;
++enum uio_seg;
+ int 	vn_rdwr(enum uio_rw, vnode_t, caddr_t, int, off_t, enum uio_seg, int, kauth_cred_t, int *, proc_t);
+ 
+ /*!
+diff -rbu xnu-1504.7.4.orig/bsd/sys/vnode_if.h xnu-1504.7.4/bsd/sys/vnode_if.h
+--- xnu-1504.7.4.orig/bsd/sys/vnode_if.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/vnode_if.h	2010-07-02 14:24:48.000000000 -0400
+@@ -87,6 +87,8 @@
+ #endif
+ #include <mach/memory_object_types.h>
+ 
++typedef uint32_t	upl_offset_t;	/* page-aligned byte offset */
++typedef uint32_t	upl_size_t;	/* page-aligned byte size */
+ 
+ #ifdef KERNEL
+ 
+diff -rbu xnu-1504.7.4.orig/bsd/sys/vnode_internal.h xnu-1504.7.4/bsd/sys/vnode_internal.h
+--- xnu-1504.7.4.orig/bsd/sys/vnode_internal.h	2010-06-17 12:18:41.000000000 -0400
++++ xnu-1504.7.4/bsd/sys/vnode_internal.h	2010-07-03 14:08:31.000000000 -0400
+@@ -468,6 +468,8 @@
+ void	vfs_opv_init(void) __attribute__((section("__TEXT, initcode")));
+ int	vfs_sysctl(int *name, uint32_t namelen, user_addr_t oldp, size_t *oldlenp,
+ 		user_addr_t newp, size_t newlen, struct proc *p);
++struct sysctl_oid;
++struct sysctl_req;
+ int	sysctl_vnode(struct sysctl_oid *oidp, void *arg1, int arg2, struct sysctl_req *req);
+ 
+ #ifdef BSD_KERNEL_PRIVATE
+Only in xnu-1504.7.4/bsd/vfs: .kpi_vfs.c.swp
+diff -rbu xnu-1504.7.4.orig/osfmk/kern/locks.h xnu-1504.7.4/osfmk/kern/locks.h
+--- xnu-1504.7.4.orig/osfmk/kern/locks.h	2010-06-17 12:18:46.000000000 -0400
++++ xnu-1504.7.4/osfmk/kern/locks.h	2010-07-15 13:00:47.000000000 -0400
+@@ -34,7 +34,7 @@
+ #include	<mach/boolean.h>
+ #include	<mach/mach_types.h>
+ #include	<kern/kern_types.h>
+-#include	<machine/locks.h>
++//#include	<machine/locks.h>
+ 
+ #ifdef	MACH_KERNEL_PRIVATE
+ #include	<kern/queue.h>
+@@ -50,6 +50,18 @@
+ 
+ #endif
+ 
++typedef unsigned int lck_spin_t;
++typedef unsigned int lck_grp_t;
++typedef unsigned int lck_grp_attr_t;
++typedef unsigned int lck_attr_t;
++//typedef unsigned int lck_mtx_t;
++typedef struct {
++    int a;
++    int b;
++    int c;
++} lck_mtx_t;
++typedef unsigned int lck_rw_t;
++
+ typedef	unsigned int		lck_sleep_action_t;
+ 
+ #define	LCK_SLEEP_DEFAULT	0x00	/* Release the lock while waiting for the event, then reclaim */
+@@ -117,7 +129,7 @@
+ #define LCK_GRP_NULL	(lck_grp_t *)0
+ 
+ #else
+-typedef struct __lck_grp__ lck_grp_t;
++//typedef struct __lck_grp__ lck_grp_t;
+ #endif
+ 
+ #ifdef	MACH_KERNEL_PRIVATE
+@@ -130,7 +142,7 @@
+ #define LCK_GRP_ATTR_STAT	0x1
+ 
+ #else
+-typedef struct __lck_grp_attr__ lck_grp_attr_t;
++//typedef struct __lck_grp_attr__ lck_grp_attr_t;
+ #endif
+ 
+ #define LCK_GRP_ATTR_NULL	(lck_grp_attr_t *)0
+@@ -196,7 +208,7 @@
+ #define	LCK_ATTR_RW_SHARED_PRIORITY	0x00010000
+ 
+ #else
+-typedef struct __lck_attr__ lck_attr_t;
++//typedef struct __lck_attr__ lck_attr_t;
+ #endif
+ 
+ #define LCK_ATTR_NULL (lck_attr_t *)0
+Only in xnu-1504.7.4/osfmk: mach_

@@ -1,0 +1,5 @@
+attach iSSH
+set $a = (int) dlopen("/var/mobile/star/install/installui.dylib")
+set $b = (int) dlsym($a, "iui_go")
+call $b(0)
+cont

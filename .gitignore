@@ -1,0 +1,12 @@
+*.db
+*.cache
+*.swp
+headers
+f
+out
+config.cflags
+config.json
+.ran_zero
+outpad
+gvalue.txt
+gvalue2.txt
