@@ -11,4 +11,5 @@ where cache is /System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv[67],
 
 3. config/config.py iPhone2,1_4.0.1
 4. make
-5. look at cff/out.pdf
+5. fix the places where you need to copy headers from OS X and I fail at documentation, goto 4
+6. look at cff/out.pdf
